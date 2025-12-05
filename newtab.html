@@ -583,196 +583,212 @@
     makeDraggable('win2');
 
 document.addEventListener('DOMContentLoaded', () => {
-  const settingsBtn = document.getElementById('settingsBtn');
-  const settingsPopup = document.getElementById('settingsPopup');
-  const closeSettings = document.getElementById('closeSettings');
-
-  const darkModeToggle = document.getElementById('darkModeToggle');
-  const showShortcutsToggle = document.getElementById('showShortcutsToggle');
-  const animatedBgToggle = document.getElementById('animatedBgToggle');
-  const nameInput = document.getElementById('nameInput');
-  const saveNameBtn = document.getElementById('saveNameBtn');
-
+  // Inputs and buttons (ensure these exist in your settings popup)
   const hackatimeUsernameInput = document.getElementById('hackatimeUsername');
   const hackatimeKeyInput = document.getElementById('hackatimeKey');
   const saveHackatimeBtn = document.getElementById('saveHackatimeBtn');
 
-  const hackatimeStats = document.getElementById('hackatimeStats');
-  const hackatimeTable = document.getElementById('hackatimeTable');
+  // Hackatime window elements (ensure these exist in your window HTML)
+  const hackatimeStats = document.getElementById('hackatimeStats');     // summary text container
+  const hackatimeTable = document.getElementById('hackatimeTable');     // reusable table (we’ll use for languages)
 
-  const term1 = document.getElementById('term1');
-  const BASE_URL = "https://hackatime.hackclub.com/api/v1";
+  // Optional: create a dedicated projects table if not present
+  let hackatimeProjectsTable = document.getElementById('hackatimeProjectsTable');
+  if (!hackatimeProjectsTable) {
+    hackatimeProjectsTable = document.createElement('table');
+    hackatimeProjectsTable.id = 'hackatimeProjectsTable';
+    hackatimeProjectsTable.style.cssText = `
+      width: 100%;
+      margin-top: 12px;
+      border-collapse: collapse;
+      font-family: monospace;
+      font-size: 14px;
+      color: #cbd5e1;
+      display: none;
+    `;
+    hackatimeProjectsTable.innerHTML = `
+      <thead>
+        <tr style="background:#121820; color:#9ecbff;">
+          <th style="padding:6px; border:1px solid #1b2330;">Project</th>
+          <th style="padding:6px; border:1px solid #1b2330;">Time</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
+    // Append after the primary table
+    if (hackatimeTable?.parentElement) {
+      hackatimeTable.parentElement.appendChild(hackatimeProjectsTable);
+    }
+  }
 
-  // Popup open/close
-  settingsBtn.addEventListener('click', () => {
-    settingsPopup.style.display = 'block';
-  });
-  closeSettings.addEventListener('click', () => {
-    settingsPopup.style.display = 'none';
-  });
+  const BASE_V1 = 'https://hackatime.hackclub.com/api/v1';
+  const BASE_HACKATIME_V1 = 'https://hackatime.hackclub.com/api/hackatime/v1';
 
-  // Load settings
   function loadSettings() {
     const settings = JSON.parse(localStorage.getItem('settings')) || {};
-    darkModeToggle.checked = settings.darkMode || false;
-    showShortcutsToggle.checked = settings.showShortcuts !== false;
-    animatedBgToggle.checked = settings.animatedBg !== false;
-    nameInput.value = settings.name || '';
     hackatimeUsernameInput.value = settings.hackatimeUsername || '';
     hackatimeKeyInput.value = settings.hackatimeKey || '';
 
-    applySettings(settings);
-    if (settings.name) injectGreeting(settings.name);
     if (settings.hackatimeUsername && settings.hackatimeKey) {
-      fetchHackatimeSummaries(settings.hackatimeUsername, settings.hackatimeKey);
-      fetchHackatimeStats(settings.hackatimeUsername, settings.hackatimeKey);
-      fetchHackatimeProjects(settings.hackatimeUsername, settings.hackatimeKey);
+      refreshHackatime(settings.hackatimeUsername, settings.hackatimeKey);
+    } else {
+      hackatimeStats.textContent = 'Set your Hackatime username and API key in Settings to load stats.';
+      hackatimeTable.style.display = 'none';
+      hackatimeProjectsTable.style.display = 'none';
     }
   }
 
-  // Apply settings
-  function applySettings(settings) {
-    document.body.style.background = settings.darkMode ? '#000' : '';
-    document.getElementById('win2').style.display = settings.showShortcuts ? '' : 'none';
-    document.querySelector('.matrix').style.display = settings.animatedBg ? '' : 'none';
-  }
-
-  // Save settings
   function saveSettings() {
-    const settings = {
-      darkMode: darkModeToggle.checked,
-      showShortcuts: showShortcutsToggle.checked,
-      animatedBg: animatedBgToggle.checked,
-      name: nameInput.value.trim(),
-      hackatimeUsername: hackatimeUsernameInput.value.trim(),
-      hackatimeKey: hackatimeKeyInput.value.trim()
-    };
+    const settings = JSON.parse(localStorage.getItem('settings')) || {};
+    settings.hackatimeUsername = hackatimeUsernameInput.value.trim();
+    settings.hackatimeKey = hackatimeKeyInput.value.trim();
     localStorage.setItem('settings', JSON.stringify(settings));
-    applySettings(settings);
-    if (settings.name) injectGreeting(settings.name);
+    return settings;
   }
-
-  // Event listeners
-  darkModeToggle.addEventListener('change', saveSettings);
-  showShortcutsToggle.addEventListener('change', saveSettings);
-  animatedBgToggle.addEventListener('change', saveSettings);
-
-  saveNameBtn.addEventListener('click', () => {
-    saveSettings();
-    alert(`Name saved as "${nameInput.value.trim()}"`);
-  });
 
   saveHackatimeBtn.addEventListener('click', () => {
-    saveSettings();
-    alert("Hackatime settings saved!");
-    const settings = JSON.parse(localStorage.getItem('settings')) || {};
+    const settings = saveSettings();
     if (settings.hackatimeUsername && settings.hackatimeKey) {
-      fetchHackatimeSummaries(settings.hackatimeUsername, settings.hackatimeKey);
-      fetchHackatimeStats(settings.hackatimeUsername, settings.hackatimeKey);
-      fetchHackatimeProjects(settings.hackatimeUsername, settings.hackatimeKey);
+      hackatimeStats.textContent = 'Loading Hackatime stats...';
+      refreshHackatime(settings.hackatimeUsername, settings.hackatimeKey);
+    } else {
+      hackatimeStats.textContent = 'Please enter both username and API key.';
     }
   });
 
-  // Hackatime fetch functions
-  async function fetchHackatimeSummaries(username, apiKey) {
+  async function refreshHackatime(username, apiKey) {
+    // Fetch today’s statusbar time (user=current, requires api key)
+    await fetchTodayStatus(apiKey);
+    // Fetch public stats for user (languages, projects, totals)
+    await fetchUserStats(username, apiKey);
+  }
+
+  async function fetchTodayStatus(apiKey) {
     try {
-      const url = `${BASE_URL}/users/${encodeURIComponent(username)}/summaries?range=last_7_days&api_key=${encodeURIComponent(apiKey)}`;
+      const url = `${BASE_HACKATIME_V1}/users/current/statusbar/today?api_key=${encodeURIComponent(apiKey)}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      const data = await res.json();
+      if (!res.ok) throw new Error(`Statusbar error ${res.status}`);
+      const json = await res.json();
+      const text = json?.data?.grand_total?.text || '';
+      const seconds = json?.data?.grand_total?.total_seconds || 0;
 
-      const total = data.data.reduce((sum, day) => sum + day.grand_total.total_seconds, 0);
-      const hours = (total / 3600).toFixed(2);
-      hackatimeStats.textContent = `Last 7 days: ${hours} hrs coded`;
-
-      const tbody = hackatimeTable.querySelector('tbody');
-      tbody.innerHTML = "";
-      data.data.forEach(day => {
-        const tr = document.createElement('tr');
-        const dateCell = document.createElement('td');
-        const hoursCell = document.createElement('td');
-        dateCell.textContent = day.range.date;
-        dateCell.style.padding = "6px";
-        dateCell.style.border = "1px solid #1b2330";
-        const hrs = (day.grand_total.total_seconds / 3600).toFixed(2);
-        hoursCell.textContent = hrs;
-        hoursCell.style.padding = "6px";
-        hoursCell.style.border = "1px solid #1b2330";
-        tr.appendChild(dateCell);
-        tr.appendChild(hoursCell);
-        tbody.appendChild(tr);
-      });
-      hackatimeTable.style.display = "table";
+      // Prepend/merge into summary
+      const existing = hackatimeStats.textContent?.trim();
+      const todayLine = text ? `Today: ${text}` : `Today: ${(seconds/3600).toFixed(2)} hrs`;
+      hackatimeStats.textContent = existing ? `${todayLine} • ${existing}` : todayLine;
     } catch (err) {
-      hackatimeStats.textContent = "Error fetching summaries.";
-      hackatimeTable.style.display = "none";
+      // Keep UI friendly; log details to console
       console.error(err);
     }
   }
 
-  async function fetchHackatimeStats(username, apiKey) {
+  async function fetchUserStats(username, apiKey) {
     try {
-      const url = `${BASE_URL}/users/${encodeURIComponent(username)}/stats?api_key=${encodeURIComponent(apiKey)}`;
+      const url = `${BASE_V1}/users/${encodeURIComponent(username)}/stats?api_key=${encodeURIComponent(apiKey)}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error(`Error ${res.status}`);
+      if (!res.ok) throw new Error(`Stats error ${res.status}`);
       const data = await res.json();
 
-      if (data.languages && data.languages.length) {
-        const tbody = hackatimeTable.querySelector('tbody');
-        const headerRow = hackatimeTable.querySelector('thead tr');
-        headerRow.innerHTML = "<th>Language</th><th>Time</th>";
-        tbody.innerHTML = "";
-        data.languages.slice(0, 10).forEach(lang => {
+      // Summary (total)
+      const totalSeconds = data?.total_seconds || 0;
+      const totalHours = (totalSeconds / 3600).toFixed(2);
+      const summaryExisting = hackatimeStats.textContent?.trim();
+      const totalLine = `Total: ${totalHours} hrs coded`;
+      hackatimeStats.textContent = summaryExisting ? `${summaryExisting} • ${totalLine}` : totalLine;
+
+      // Languages table (top 10)
+      renderLanguages(data?.languages || []);
+
+      // Projects table (top 10)
+      renderProjects(data?.projects || []);
+    } catch (err) {
+      hackatimeStats.textContent = 'Error fetching user stats.';
+      hackatimeTable.style.display = 'none';
+      hackatimeProjectsTable.style.display = 'none';
+      console.error(err);
+    }
+  }
+
+  function renderLanguages(languages) {
+    if (!Array.isArray(languages) || languages.length === 0) {
+      hackatimeTable.style.display = 'none';
+      return;
+    }
+    const theadRow = hackatimeTable.querySelector('thead tr');
+    const tbody = hackatimeTable.querySelector('tbody');
+    if (theadRow) theadRow.innerHTML = `
+      <th style="padding:6px; border:1px solid #1b2330;">Language</th>
+      <th style="padding:6px; border:1px solid #1b2330;">Time</th>
+    `;
+    if (tbody) {
+      tbody.innerHTML = '';
+      languages.slice(0, 10).forEach(lang => {
+        const tr = document.createElement('tr');
+        const nameCell = document.createElement('td');
+        const timeCell = document.createElement('td');
+
+        nameCell.textContent = lang.name || '';
+        timeCell.textContent = lang.text || formatSeconds(lang.seconds);
+
+        nameCell.style.padding = '6px';
+        nameCell.style.border = '1px solid #1b2330';
+        timeCell.style.padding = '6px';
+        timeCell.style.border = '1px solid #1b2330';
+
+        tr.appendChild(nameCell);
+        tr.appendChild(timeCell);
+        tbody.appendChild(tr);
+      });
+    }
+    hackatimeTable.style.display = 'table';
+  }
+
+  function renderProjects(projects) {
+    if (!Array.isArray(projects) || projects.length === 0) {
+      hackatimeProjectsTable.style.display = 'none';
+      return;
+    }
+    const tbody = hackatimeProjectsTable.querySelector('tbody');
+    const theadRow = hackatimeProjectsTable.querySelector('thead tr');
+    if (theadRow) theadRow.innerHTML = `
+      <th style="padding:6px; border:1px solid #1b2330;">Project</th>
+      <th style="padding:6px; border:1px solid #1b2330;">Time</th>
+    `;
+    if (tbody) {
+      tbody.innerHTML = '';
+      projects
+        .slice(0, 10)
+        .forEach(p => {
           const tr = document.createElement('tr');
           const nameCell = document.createElement('td');
           const timeCell = document.createElement('td');
-          nameCell.textContent = lang.name;
-          nameCell.style.padding = "6px";
-          nameCell.style.border = "1px solid #1b2330";
-          timeCell.textContent = lang.text;
-          timeCell.style.padding = "6px";
-          timeCell.style.border = "1px solid #1b2330";
+
+          nameCell.textContent = p.name || '';
+          timeCell.textContent = p.text || formatSeconds(p.seconds);
+
+          nameCell.style.padding = '6px';
+          nameCell.style.border = '1px solid #1b2330';
+          timeCell.style.padding = '6px';
+          timeCell.style.border = '1px solid #1b2330';
+
           tr.appendChild(nameCell);
           tr.appendChild(timeCell);
           tbody.appendChild(tr);
         });
-        hackatimeTable.style.display = "table";
-      }
-    } catch (err) {
-      console.error(err);
     }
+    hackatimeProjectsTable.style.display = 'table';
   }
 
-  async function fetchHackatimeProjects(username, apiKey) {
-    try {
-      const url = `${BASE_URL}/users/${encodeURIComponent(username)}/projects?api_key=${encodeURIComponent(apiKey)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Error ${res.status}`);
-      const data = await res.json();
-
-      console.log("Projects:", data);
-      // You can render projects in a dedicated window if desired
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  // Greeting injection
-  function injectGreeting(name) {
-    const oldGreeting = term1.querySelector('.greetingLine');
-    if (oldGreeting) oldGreeting.remove();
-    const oldOutput = term1.querySelector('.greetingOutput');
-    if (oldOutput) oldOutput.remove();
-
-    const greetingLine = document.createElement('span');
-    greetingLine.className = 'line greetingLine';
-    greetingLine.textContent = `$ echo "Hello, ${name}!"`;
-    term1.appendChild(greetingLine);
-
-    const outputLine = document.createElement('span');
-    outputLine.className = 'line greetingOutput';
-    outputLine.textContent = `Hello, ${name}!`;
-    term1.appendChild(outputLine);
+  function formatSeconds(sec) {
+    if (typeof sec !== 'number' || !isFinite(sec) || sec <= 0) return '';
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60);
+    const parts = [];
+    if (h) parts.push(`${h}h`);
+    if (m) parts.push(`${m}m`);
+    if (s && !h && !m) parts.push(`${s}s`);
+    return parts.join(' ');
   }
 
   loadSettings();
