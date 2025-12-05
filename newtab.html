@@ -585,26 +585,50 @@
     }
     makeDraggable('win1');
     makeDraggable('win2');
+    makeDraggable('HackatimeWin');
 
 document.addEventListener('DOMContentLoaded', () => {
   const BASE_V1 = 'https://hackatime.hackclub.com/api/v1';
   const BASE_HACKATIME_V1 = 'https://hackatime.hackclub.com/api/hackatime/v1';
 
+  // Settings inputs (must exist in your settings popup)
   const usernameInput = document.getElementById('hackatimeUsername');
   const keyInput = document.getElementById('hackatimeKey');
   const saveBtn = document.getElementById('saveHackatimeBtn');
 
+  // Hackatime window elements (must exist in your window HTML)
+  const win = document.getElementById('hackatimeWin'); // outer window div
   const summaryEl = document.getElementById('hackatimeSummary');
   const table = document.getElementById('hackatimeTable');
   const tbody = table.querySelector('tbody');
   const projectsWrap = document.getElementById('hackatimeProjects');
   const projectsList = document.getElementById('hackatimeProjectsList');
 
+  // Small helper to show a transient status message (removed after success)
+  function showTempMessage(msg) {
+    summaryEl.textContent = msg;
+  }
+
+  function clearTempMessage() {
+    // Only clear if the content is a loading message (avoid erasing real data)
+    if (summaryEl.dataset.loading === 'true') {
+      summaryEl.textContent = '';
+      delete summaryEl.dataset.loading;
+    }
+  }
+
   function loadSettings() {
     const s = JSON.parse(localStorage.getItem('settings')) || {};
     usernameInput.value = s.hackatimeUsername || '';
     keyInput.value = s.hackatimeKey || '';
-    if (s.hackatimeUsername && s.hackatimeKey) refreshAll(s.hackatimeUsername, s.hackatimeKey);
+    if (s.hackatimeUsername && s.hackatimeKey) {
+      refreshAll(s.hackatimeUsername, s.hackatimeKey);
+    } else {
+      // keep window styled but empty until user saves settings
+      summaryEl.textContent = '';
+      table.style.display = 'none';
+      projectsWrap.style.display = 'none';
+    }
   }
 
   saveBtn.addEventListener('click', () => {
@@ -613,98 +637,161 @@ document.addEventListener('DOMContentLoaded', () => {
       hackatimeKey: keyInput.value.trim()
     };
     localStorage.setItem('settings', JSON.stringify(settings));
-    if (settings.hackatimeUsername && settings.hackatimeKey) refreshAll(settings.hackatimeUsername, settings.hackatimeKey);
+    if (settings.hackatimeUsername && settings.hackatimeKey) {
+      refreshAll(settings.hackatimeUsername, settings.hackatimeKey);
+    } else {
+      summaryEl.textContent = 'Please enter both username and API key.';
+      table.style.display = 'none';
+      projectsWrap.style.display = 'none';
+    }
   });
 
   async function refreshAll(username, apiKey) {
-    // clear UI placeholders
+    // UI reset
     summaryEl.textContent = '';
+    summaryEl.dataset.loading = 'true';
+    showTempMessage('Loading Hackatime stats...');
     tbody.innerHTML = '';
     table.style.display = 'none';
     projectsList.innerHTML = '';
     projectsWrap.style.display = 'none';
 
-    await Promise.all([
+    // Run calls in parallel where possible
+    await Promise.allSettled([
       fetchTodayStatus(apiKey),
       fetchUserStats(username, apiKey),
-      fetchSummaries(username, apiKey),
-      fetchProjects(username, apiKey)
+      fetchUserProjects(username, apiKey)
     ]);
+
+    // Remove the loading message once any data has been rendered
+    clearTempMessage();
   }
 
   async function fetchTodayStatus(apiKey) {
     try {
       const url = `${BASE_HACKATIME_V1}/users/current/statusbar/today?api_key=${encodeURIComponent(apiKey)}`;
-      const r = await fetch(url);
-      if (!r.ok) throw new Error('today status error');
-      const j = await r.json();
-      const text = j?.data?.grand_total?.text || null;
-      if (text) summaryEl.textContent = `Today: ${text}`;
-    } catch (e) { console.error(e); }
+      const res = await fetch(url);
+      if (!res.ok) {
+        // don't throw for 401/403/404 here; just log and continue
+        console.warn('Today status fetch failed', res.status);
+        return;
+      }
+      const json = await res.json();
+      const text = json?.data?.grand_total?.text || null;
+      const seconds = json?.data?.grand_total?.total_seconds || 0;
+      const todayLine = text ? `Today: ${text}` : `Today: ${(seconds / 3600).toFixed(2)} hrs`;
+      // Prepend to summary but don't overwrite later totals
+      const prev = summaryEl.textContent || '';
+      summaryEl.textContent = prev ? `${todayLine} • ${prev}` : todayLine;
+    } catch (err) {
+      console.error('fetchTodayStatus error', err);
+    }
   }
 
   async function fetchUserStats(username, apiKey) {
     try {
       const url = `${BASE_V1}/users/${encodeURIComponent(username)}/stats?api_key=${encodeURIComponent(apiKey)}`;
-      const r = await fetch(url);
-      if (!r.ok) throw new Error('stats error');
-      const d = await r.json();
-
-      // populate table with totals and top languages
-      const rows = [
-        ['Total seconds', d.total_seconds || 0],
-        ['Total hours', d.total_seconds ? (d.total_seconds/3600).toFixed(2) : '0']
-      ];
-      // languages summary
-      if (Array.isArray(d.languages) && d.languages.length) {
-        rows.push(['Top language', d.languages[0].name + ' — ' + (d.languages[0].text || '')]);
+      const res = await fetch(url);
+      if (!res.ok) {
+        console.error('User stats fetch failed', res.status);
+        summaryEl.textContent = 'Unable to load user stats.';
+        return;
       }
-      tbody.innerHTML = rows.map(r => `<tr><td style="padding:6px;border:1px solid #12202a;">${r[0]}</td><td style="padding:6px;border:1px solid #12202a;">${r[1]}</td></tr>`).join('');
-      table.style.display = 'table';
-    } catch (e) { console.error(e); }
+      const data = await res.json();
+
+      // Build summary lines (total seconds/hours)
+      const totalSeconds = data?.total_seconds || 0;
+      const totalHours = (totalSeconds / 3600).toFixed(2);
+      const totalsLine = `Total: ${totalHours} hrs`;
+      // Merge with any existing summary (today)
+      const prev = summaryEl.textContent || '';
+      summaryEl.textContent = prev ? `${prev} • ${totalsLine}` : totalsLine;
+
+      // Render top languages into the main table
+      renderLanguages(data?.languages || []);
+
+      // If projects are included in stats payload, render them too (some APIs include projects)
+      if (Array.isArray(data?.projects) && data.projects.length) {
+        renderProjects(data.projects);
+      }
+    } catch (err) {
+      console.error('fetchUserStats error', err);
+      summaryEl.textContent = 'Error fetching user stats.';
+    }
   }
 
-  async function fetchSummaries(username, apiKey) {
-    try {
-      const url = `${BASE_V1}/users/${encodeURIComponent(username)}/summaries?range=last_7_days&api_key=${encodeURIComponent(apiKey)}`;
-      const r = await fetch(url);
-      if (!r.ok) throw new Error('summaries error');
-      const d = await r.json();
-      // append daily breakdown to table
-      if (Array.isArray(d.data)) {
-        d.data.forEach(day => {
-          const date = day.range?.date || '';
-          const secs = day.grand_total?.total_seconds || 0;
-          const hrs = (secs/3600).toFixed(2);
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td style="padding:6px;border:1px solid #12202a;">${date}</td><td style="padding:6px;border:1px solid #12202a;">${hrs} hrs</td>`;
-          tbody.appendChild(tr);
-        });
-        table.style.display = 'table';
-      }
-    } catch (e) { console.error(e); }
-  }
-
-  async function fetchProjects(username, apiKey) {
+  async function fetchUserProjects(username, apiKey) {
     try {
       const url = `${BASE_V1}/users/${encodeURIComponent(username)}/projects?api_key=${encodeURIComponent(apiKey)}`;
-      const r = await fetch(url);
-      if (!r.ok) throw new Error('projects error');
-      const d = await r.json();
-      if (Array.isArray(d) && d.length) {
-        projectsList.innerHTML = '';
-        d.slice(0,10).forEach(p => {
-          const li = document.createElement('li');
-          li.style.padding = '6px 0';
-          li.style.borderBottom = '1px dashed rgba(255,255,255,0.03)';
-          li.textContent = `${p.name || p.repo || 'Unnamed'} — ${p.text || ''}`;
-          projectsList.appendChild(li);
-        });
-        projectsWrap.style.display = 'block';
+      const res = await fetch(url);
+      if (!res.ok) {
+        console.warn('Projects fetch failed', res.status);
+        return;
       }
-    } catch (e) { console.error(e); }
+      const data = await res.json();
+      // API may return an array or an object; handle both
+      const projects = Array.isArray(data) ? data : data?.projects || [];
+      if (projects.length) renderProjects(projects);
+    } catch (err) {
+      console.error('fetchUserProjects error', err);
+    }
   }
 
+  function renderLanguages(languages) {
+    if (!Array.isArray(languages) || languages.length === 0) {
+      // keep table hidden if no languages
+      return;
+    }
+    // Ensure header shows Language / Time
+    const headerRow = table.querySelector('thead tr');
+    headerRow.innerHTML = `
+      <th style="padding:6px; border:1px solid #12202a;">Language</th>
+      <th style="padding:6px; border:1px solid #12202a;">Time</th>
+    `;
+    tbody.innerHTML = '';
+    languages.slice(0, 10).forEach(lang => {
+      const tr = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      const timeCell = document.createElement('td');
+      nameCell.textContent = lang.name || '';
+      timeCell.textContent = lang.text || formatSeconds(lang.seconds);
+      nameCell.style.padding = '6px';
+      nameCell.style.border = '1px solid #12202a';
+      timeCell.style.padding = '6px';
+      timeCell.style.border = '1px solid #12202a';
+      tr.appendChild(nameCell);
+      tr.appendChild(timeCell);
+      tbody.appendChild(tr);
+    });
+    table.style.display = 'table';
+  }
+
+  function renderProjects(projects) {
+    if (!Array.isArray(projects) || projects.length === 0) return;
+    projectsList.innerHTML = '';
+    projects.slice(0, 10).forEach(p => {
+      const li = document.createElement('li');
+      li.style.padding = '6px 0';
+      li.style.borderBottom = '1px dashed rgba(255,255,255,0.03)';
+      const name = p.name || p.repo || p.title || 'Unnamed';
+      const timeText = p.text || formatSeconds(p.seconds) || '';
+      li.textContent = `${name}${timeText ? ' — ' + timeText : ''}`;
+      projectsList.appendChild(li);
+    });
+    projectsWrap.style.display = 'block';
+  }
+
+  function formatSeconds(sec) {
+    if (typeof sec !== 'number' || !isFinite(sec) || sec <= 0) return '';
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const parts = [];
+    if (h) parts.push(`${h}h`);
+    if (m) parts.push(`${m}m`);
+    return parts.join(' ');
+  }
+
+  // Initialize
   loadSettings();
 });
 </script>
