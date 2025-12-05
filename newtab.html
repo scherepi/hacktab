@@ -457,30 +457,6 @@
 💾 Save Name
 </button>
 <label style="display:block; margin-bottom:10px;">
-  Hackatime API Key:
-  <input type="text" id="hackatimeKey" placeholder="Enter API key" style="
-    width: 100%;
-    margin-top: 6px;
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #1b2330;
-    background: #0a0f14;
-    color: #c9d1d9;
-  " />
-</label>
-<button id="saveHackatimeBtn" style="
-  background: #0f1520;
-  border: 1px solid #283244;
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: #c9d1d9;
-  cursor: pointer;
-  margin-bottom: 12px;
-">
-💾 Save API Key
-</button>
-
-<label style="display:block; margin-bottom:10px;">
   Hackatime Username:
   <input type="text" id="hackatimeUsername" placeholder="Enter your Hackatime username" style="
     width: 100%;
@@ -492,7 +468,21 @@
     color: #c9d1d9;
   " />
 </label>
-<button id="saveHackatimeUserBtn" style="
+
+<label style="display:block; margin-bottom:10px;">
+  Hackatime API Key:
+  <input type="text" id="hackatimeKey" placeholder="Enter your Hackatime API key" style="
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #1b2330;
+    background: #0a0f14;
+    color: #c9d1d9;
+  " />
+</label>
+
+<button id="saveHackatimeBtn" style="
   background: #0f1520;
   border: 1px solid #283244;
   border-radius: 8px;
@@ -501,7 +491,7 @@
   cursor: pointer;
   margin-bottom: 12px;
 ">
-💾 Save Username
+💾 Save Hackatime Settings
 </button>
 
 
@@ -603,62 +593,66 @@ document.addEventListener('DOMContentLoaded', () => {
   const nameInput = document.getElementById('nameInput');
   const saveNameBtn = document.getElementById('saveNameBtn');
 
-  const hackatimeKeyInput = document.getElementById('hackatimeKey');
   const hackatimeUsernameInput = document.getElementById('hackatimeUsername');
+  const hackatimeKeyInput = document.getElementById('hackatimeKey');
   const saveHackatimeBtn = document.getElementById('saveHackatimeBtn');
-  const saveHackatimeUserBtn = document.getElementById('saveHackatimeUserBtn');
 
   const hackatimeStats = document.getElementById('hackatimeStats');
   const hackatimeTable = document.getElementById('hackatimeTable');
 
   const term1 = document.getElementById('term1');
+  const BASE_URL = "https://hackatime.hackclub.com/api/v1";
 
+  // Popup open/close
   settingsBtn.addEventListener('click', () => {
     settingsPopup.style.display = 'block';
   });
-
   closeSettings.addEventListener('click', () => {
     settingsPopup.style.display = 'none';
   });
 
+  // Load settings
   function loadSettings() {
     const settings = JSON.parse(localStorage.getItem('settings')) || {};
     darkModeToggle.checked = settings.darkMode || false;
     showShortcutsToggle.checked = settings.showShortcuts !== false;
     animatedBgToggle.checked = settings.animatedBg !== false;
     nameInput.value = settings.name || '';
-    hackatimeKeyInput.value = settings.hackatimeKey || '';
     hackatimeUsernameInput.value = settings.hackatimeUsername || '';
+    hackatimeKeyInput.value = settings.hackatimeKey || '';
 
     applySettings(settings);
-    if (settings.hackatimeKey && settings.hackatimeUsername) {
+    if (settings.name) injectGreeting(settings.name);
+    if (settings.hackatimeUsername && settings.hackatimeKey) {
       fetchHackatimeSummaries(settings.hackatimeUsername, settings.hackatimeKey);
       fetchHackatimeStats(settings.hackatimeUsername, settings.hackatimeKey);
       fetchHackatimeProjects(settings.hackatimeUsername, settings.hackatimeKey);
     }
-    if (settings.name) injectGreeting(settings.name);
   }
 
+  // Apply settings
   function applySettings(settings) {
     document.body.style.background = settings.darkMode ? '#000' : '';
     document.getElementById('win2').style.display = settings.showShortcuts ? '' : 'none';
     document.querySelector('.matrix').style.display = settings.animatedBg ? '' : 'none';
   }
 
+  // Save settings
   function saveSettings() {
     const settings = {
       darkMode: darkModeToggle.checked,
       showShortcuts: showShortcutsToggle.checked,
       animatedBg: animatedBgToggle.checked,
       name: nameInput.value.trim(),
-      hackatimeKey: hackatimeKeyInput.value.trim(),
-      hackatimeUsername: hackatimeUsernameInput.value.trim()
+      hackatimeUsername: hackatimeUsernameInput.value.trim(),
+      hackatimeKey: hackatimeKeyInput.value.trim()
     };
     localStorage.setItem('settings', JSON.stringify(settings));
     applySettings(settings);
     if (settings.name) injectGreeting(settings.name);
   }
 
+  // Event listeners
   darkModeToggle.addEventListener('change', saveSettings);
   showShortcutsToggle.addEventListener('change', saveSettings);
   animatedBgToggle.addEventListener('change', saveSettings);
@@ -670,25 +664,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   saveHackatimeBtn.addEventListener('click', () => {
     saveSettings();
-    alert("Hackatime API key saved!");
+    alert("Hackatime settings saved!");
     const settings = JSON.parse(localStorage.getItem('settings')) || {};
-    if (settings.hackatimeKey && settings.hackatimeUsername) {
+    if (settings.hackatimeUsername && settings.hackatimeKey) {
       fetchHackatimeSummaries(settings.hackatimeUsername, settings.hackatimeKey);
       fetchHackatimeStats(settings.hackatimeUsername, settings.hackatimeKey);
       fetchHackatimeProjects(settings.hackatimeUsername, settings.hackatimeKey);
     }
   });
 
-  saveHackatimeUserBtn.addEventListener('click', () => {
-    saveSettings();
-    alert(`Hackatime username saved as "${hackatimeUsernameInput.value.trim()}"`);
-  });
-
+  // Hackatime fetch functions
   async function fetchHackatimeSummaries(username, apiKey) {
     try {
-      const url = `https://hackatime.hackclub.com/api/v1/users/${encodeURIComponent(username)}/summaries?range=last_7_days&api_key=${encodeURIComponent(apiKey)}`;
+      const url = `${BASE_URL}/users/${encodeURIComponent(username)}/summaries?range=last_7_days&api_key=${encodeURIComponent(apiKey)}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
 
       const total = data.data.reduce((sum, day) => sum + day.grand_total.total_seconds, 0);
@@ -701,21 +691,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const tr = document.createElement('tr');
         const dateCell = document.createElement('td');
         const hoursCell = document.createElement('td');
-
         dateCell.textContent = day.range.date;
         dateCell.style.padding = "6px";
         dateCell.style.border = "1px solid #1b2330";
-
         const hrs = (day.grand_total.total_seconds / 3600).toFixed(2);
         hoursCell.textContent = hrs;
         hoursCell.style.padding = "6px";
         hoursCell.style.border = "1px solid #1b2330";
-
         tr.appendChild(dateCell);
         tr.appendChild(hoursCell);
         tbody.appendChild(tr);
       });
-
       hackatimeTable.style.display = "table";
     } catch (err) {
       hackatimeStats.textContent = "Error fetching summaries.";
@@ -726,9 +712,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchHackatimeStats(username, apiKey) {
     try {
-      const url = `https://hackatime.hackclub.com/api/v1/my/stats?api_key=${encodeURIComponent(apiKey)}`;
+      const url = `${BASE_URL}/users/${encodeURIComponent(username)}/stats?api_key=${encodeURIComponent(apiKey)}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
 
       if (data.languages && data.languages.length) {
@@ -759,9 +745,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchHackatimeProjects(username, apiKey) {
     try {
-      const url = `https://hackatime.hackclub.com/api/v1/users/${encodeURIComponent(username)}/projects?api_key=${encodeURIComponent(apiKey)}`;
+      const url = `${BASE_URL}/users/${encodeURIComponent(username)}/projects?api_key=${encodeURIComponent(apiKey)}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error("API error");
+      if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
 
       console.log("Projects:", data);
@@ -771,6 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Greeting injection
   function injectGreeting(name) {
     const oldGreeting = term1.querySelector('.greetingLine');
     if (oldGreeting) oldGreeting.remove();
