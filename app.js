@@ -1,4 +1,7 @@
 
+document.addEventListener('DOMContentLoaded', () => {
+
+
     const form = document.getElementById('searchForm');
     const q = document.getElementById('q');
     const engine = document.getElementById('engine');
@@ -488,3 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
 });
 
+
+});
+
+ 
