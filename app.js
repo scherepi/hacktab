@@ -122,7 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
       let url = '';
       if (eVal === 'google') url = 'https://www.google.com/search?q=' + encodeURIComponent(query);
       else if (eVal === 'duck') url = 'https://duckduckgo.com/?q=' + encodeURIComponent(query);
-      else url = 'https://www.bing.com/search?q=' + encodeURIComponent(query);
+      else if (eVal === 'bing') url = 'https://www.bing.com/search?q=' + encodeURIComponent(query);
+      else if (eVal === 'brave') url = 'https://search.brave.com/search?q=' + encodeURIComponent(query);
+      else url = 'https://www.google.com/search?q=' + encodeURIComponent(query); // fallback
 
       window.location.href = url;
     });
