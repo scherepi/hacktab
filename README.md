@@ -1,7 +1,7 @@
 # hacktab
 A better new tab for Hack Clubbers
 
-[Open a new tab →](https://therealduckers.github.io/hacktab/newtab)
+[Open a new tab in the web demo →](https://therealduckers.github.io/hacktab/newtab)
 <br>
 [Open in GitHub →](https://github.com/TheRealDuckers/hacktab)
 
