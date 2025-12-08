@@ -2,6 +2,7 @@
 A better new tab for Hack Clubbers
 
 [Open a new tab →](https://therealduckers.github.io/hacktab/newtab)
+<br>
 [Open in GitHub →](https://github.com/TheRealDuckers/hacktab)
 
 ## How to install (Chrome/Edge)
