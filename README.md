@@ -1,5 +1,5 @@
 # hacktab
-A better new tab for Hack Clubbers
+A better new tab for [Hack Clubbers](hackclub.com) 
 
 [Open a new tab in the web demo →](https://therealduckers.github.io/hacktab/newtab)
 <br>
@@ -16,9 +16,8 @@ A better new tab for Hack Clubbers
 | Hacktab appears as your new tab extension | Hacktab appears as your new tab extension |
 
 ## Shooting Troubles (otherwise known as TroubleShooting)
-> ensure that you are selecting the root folder - *not* `hacktab > hacktab > *files*`
-<br>
-> ensure you have no spaces before (or after) you usernames in settings
+- ensure that you are selecting the root folder - *not* `hacktab > hacktab > *files*`
+- ensure you have no spaces before (or after) you usernames in settings
 
 
 
