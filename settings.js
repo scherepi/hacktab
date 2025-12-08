@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const githubUsernameInput = document.getElementById('githubUsername');
   const saveGithubBtn = document.getElementById('saveGithubBtn');
 
+  
   // Helpers
   function getSettings() {
     return JSON.parse(localStorage.getItem('settings')) || {};
@@ -27,8 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('settings', JSON.stringify(settings));
     applySettings(settings);
   }
+  function applyTheme(themeName) {
+    document.documentElement.className = themeName ? `theme-${themeName}` : '';
+  }
   function applySettings(settings) {
     document.body.classList.toggle('dark', !!settings.darkMode);
+    applyTheme(settings.theme || 'dark');
     const win2 = document.getElementById('win2');
     if (win2) win2.style.display = settings.showShortcuts === false ? 'none' : '';
     const matrix = document.querySelector('.matrix');
@@ -45,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hackatimeUsernameInput) hackatimeUsernameInput.value = s.hackatimeUsername || '';
     if (hackatimeKeyInput) hackatimeKeyInput.value = s.hackatimeKey || '';
     if (githubUsernameInput) githubUsernameInput.value = s.githubUsername || '';
+    if (themeSelector) themeSelector.value = s.theme || 'dark';
     applySettings(s);
   }
 
@@ -109,6 +115,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape' && settingsPopup.style.display === 'block') {
       settingsPopup.style.display = 'none';
     }
+  });
+
+  // Theme selector
+  const themeSelector = document.getElementById('themeSelector');
+  themeSelector?.addEventListener('change', () => {
+    const s = getSettings();
+    s.theme = themeSelector.value;
+    saveSettings(s);
+    applyTheme(s.theme);
   });
 
   // Initial load

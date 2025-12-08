@@ -9,24 +9,72 @@
   <script src="stats.js" defer></script>
   <script src="plugins.js" defer></script>
   <style>
-    :root {
-      --bg: #0b0f14;
-      --bg-2: #0d1218;
-      --grid: rgba(255,255,255,0.04);
-      --text: #c9d1d9;
-      --muted: #8b949e;
-      --accent: #58a6ff;
-      --accent-2: #7ee787;
-      --accent-3: #f2cc60;
-      --shadow: rgba(0,0,0,0.35);
-      --card: #11161d;
-      --card-2: #0f141a;
-      --border: #1f2630;
-      --radius: 12px;
-      --mac-red: #ff5f57;
-      --mac-yellow: #febc2e;
-      --mac-green: #28c840;
-    }
+   :root {
+  /* Default Dark theme */
+  --bg: #0b0f14;
+  --bg-2: #0d1218;
+  --grid: rgba(255,255,255,0.04);
+  --text: #c9d1d9;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-2: #7ee787;
+  --accent-3: #f2cc60;
+  --shadow: rgba(0,0,0,0.35);
+  --card: #11161d;
+  --card-2: #0f141a;
+  --border: #1f2630;
+  --mac-red: #ff5f57;
+  --mac-yellow: #febc2e;
+  --mac-green: #28c840;
+}
+
+/* Light theme */
+html.theme-light {
+  --bg: #ffffff;
+  --bg-2: #f6f8fa;
+  --grid: rgba(0,0,0,0.04);
+  --text: #24292f;
+  --muted: #57606a;
+  --accent: #0969da;
+  --accent-2: #1a7f37;
+  --accent-3: #9e6a03;
+  --shadow: rgba(0,0,0,0.1);
+  --card: #f6f8fa;
+  --card-2: #eaeef2;
+  --border: #d0d7de;
+}
+
+/* Purple theme */
+html.theme-purple {
+  --bg: #1a1625;
+  --bg-2: #2d2440;
+  --grid: rgba(200,100,255,0.08);
+  --text: #e8d5f2;
+  --muted: #b8a0cc;
+  --accent: #d946ef;
+  --accent-2: #c026d3;
+  --accent-3: #f59e0b;
+  --shadow: rgba(105,20,180,0.3);
+  --card: #2d2440;
+  --card-2: #1f1930;
+  --border: #523a70;
+}
+
+/* Green theme */
+html.theme-green {
+  --bg: #1a2e1f;
+  --bg-2: #232d24;
+  --grid: rgba(76,175,80,0.06);
+  --text: #c5d5c0;
+  --muted: #8fa89f;
+  --accent: #66bb6a;
+  --accent-2: #558b5c;
+  --accent-3: #a4a853;
+  --shadow: rgba(0,0,0,0.25);
+  --card: #232d24;
+  --card-2: #1a2e1f;
+  --border: #3d5a44;
+}
 
     /* Reset and layout */
     * { box-sizing: border-box; }
@@ -152,8 +200,8 @@
       grid-template-columns: 1fr auto;
       align-items: center;
       gap: 10px;
-      background: #0c1117;
-      border: 1px solid #1b2330;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 8px 10px;
     }
@@ -165,22 +213,22 @@
       font-size: 18px;
       padding: 10px 12px;
     }
-    .search input::placeholder { color: #6b7280; }
+    .search input::placeholder { color: var(--muted); }
     .engine {
       display: flex; align-items: center; gap: 10px;
     }
     .engine select, .engine button {
-      background: #0a0f14;
+      background: var(--bg-2);
       color: var(--text);
-      border: 1px solid #1b2330;
+      border: 1px solid var(--border);
       border-radius: 10px;
       padding: 8px 12px;
       font-size: 14px;
       cursor: pointer;
     }
     .engine button {
-      background: linear-gradient(180deg, #0f1520, #0a0f14);
-      border: 1px solid #283244;
+      background: linear-gradient(180deg, var(--card), var(--bg-2));
+      border: 1px solid var(--border);
     }
     .engine button:hover {
       border-color: #3a4a63;
@@ -200,7 +248,7 @@
 /* window card */
 .window {
   grid-column: span 6;
-  background: linear-gradient(180deg, #0f141a, #0d1218);
+  background: linear-gradient(180deg, var(--card), var(--card-2));
   border: 1px solid var(--border, rgba(255,255,255,0.06));
   border-radius: var(--radius, 10px);
   box-shadow: 0 12px 24px var(--shadow, rgba(2,6,23,0.6));
@@ -233,8 +281,8 @@
     .window-header {
       display: flex; align-items: center; gap: 10px;
       padding: 10px 12px;
-      background: linear-gradient(180deg, #121820, #10161d);
-      border-bottom: 1px solid #1b2330;
+      background: linear-gradient(180deg, var(--card-2), var(--card));
+      border-bottom: 1px solid var(--border);
       cursor: move;
     }
     .traffic {
@@ -257,14 +305,14 @@
     .window-content {
       padding: 16px;
       font-size: 14px;
-      color: #cbd5e1;
+      color: var(--text);
     }
 
     /* Terminal-styled content area */
     .terminal {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      background: #0a0f14;
-      border: 1px solid #1b2330;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
       border-radius: 10px;
       padding: 12px;
       position: relative;
@@ -273,12 +321,12 @@
     .line {
       display: block;
       white-space: pre;
-      color: #9ecbff;
+      color: var(--accent);
     }
     .cursor {
       display: inline-block;
       width: 9px; height: 1.1em;
-      background: #9ecbff;
+      background: var(--accent);
       margin-left: 6px;
       animation: blink 1s steps(1) infinite;
       vertical-align: text-bottom;
@@ -287,10 +335,60 @@
       50% { opacity: 0; }
     }
 
+    /* Settings popup inputs and buttons */
+    #settingsPopup input[type="text"],
+    #settingsPopup input[type="checkbox"] {
+      border-color: var(--border);
+      background: var(--bg-2);
+      color: var(--text);
+    }
+    #settingsPopup button[id$="Btn"] {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text);
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    #settingsPopup button[id$="Btn"]:hover {
+      background: var(--card);
+    }
+
     /* Responsive */
     @media (max-width: 900px) {
       .window { grid-column: span 12; }
     }
+
+    .setting-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.setting-group label {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.setting-group select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.setting-group select:hover {
+  border-color: var(--accent);
+}
+
+
+
   </style>
 </head>
 <body>
@@ -316,11 +414,11 @@
   position: fixed;
   top: 16px;
   right: 16px;
-  background: #0f1520;
-  border: 1px solid #283244;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 12px;
-  color: #c9d1d9;
+  color: var(--text);
   cursor: pointer;
   z-index: 1000;
 ">
@@ -346,6 +444,7 @@
                 <option value="google">Google</option>
                 <option value="duck">DuckDuckGo</option>
                 <option value="bing">Bing</option>
+                <option value="brave">Brave</option>
               </select>
               <button type="submit">Go</button>
             </div>
@@ -403,17 +502,17 @@
     <div class="title">Hackatime</div>
   </div>
 
-  <div class="window-content" style="padding:12px; background:#07101a;">
-    <div id="hackatimeSummary" style="font-family:monospace; color:#9ecbff; margin-bottom:8px;"></div>
+  <div class="window-content" style="padding:12px;">
+    <div id="hackatimeSummary" style="font-family:monospace; color:var(--accent); margin-bottom:8px;"></div>
 
-    <table id="hackatimeTable" style="width:100%; border-collapse:collapse; display:none; font-family:monospace; color:#cbd5e1;">
-      <thead><tr style="background:#0f1720; color:#9ecbff;"><th style="padding:6px; border:1px solid #12202a;">Key</th><th style="padding:6px; border:1px solid #12202a;">Value</th></tr></thead>
+    <table id="hackatimeTable" style="width:100%; border-collapse:collapse; display:none; font-family:monospace; color:var(--text);">
+      <thead><tr style="background:var(--bg-2); color:var(--accent);"><th style="padding:6px; border:1px solid var(--border);">Key</th><th style="padding:6px; border:1px solid var(--border);">Value</th></tr></thead>
       <tbody></tbody>
     </table>
 
     <div id="hackatimeProjects" style="margin-top:10px; display:none;">
-      <div style="color:#9ecbff; font-family:monospace; margin-bottom:6px;">Top Projects</div>
-      <ul id="hackatimeProjectsList" style="list-style:none; padding:0; margin:0; color:#cbd5e1; font-family:monospace;"></ul>
+      <div style="color:var(--accent); font-family:monospace; margin-bottom:6px;">Top Projects</div>
+      <ul id="hackatimeProjectsList" style="list-style:none; padding:0; margin:0; color:var(--text); font-family:monospace;"></ul>
     </div>
   </div>
 </div>
@@ -429,9 +528,9 @@
     <div class="title">GitHub</div>
   </div>
 
-  <div class="window-content" style="padding:12px; background:#07101a;">
-    <div id="githubSummary" style="font-family:monospace; color:#9ecbff; margin-bottom:8px;"></div>
-    <ul id="githubRepos" style="list-style:none; padding:0; margin:0; color:#cbd5e1; font-family:monospace;"></ul>
+  <div class="window-content" style="padding:12px;">
+    <div id="githubSummary" style="font-family:monospace; color:var(--accent); margin-bottom:8px;"></div>
+    <ul id="githubRepos" style="text-decoration: none; list-style:none; padding:0; margin:0; color:var(--text); font-family:monospace;"></ul>
   </div>
 </div>
        
@@ -448,10 +547,10 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #0f141a;
-  border: 1px solid #1b2330;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+  box-shadow: 0 12px 24px var(--shadow);
   width: 320px;
   max-width: 90vw;
   z-index: 2000;
@@ -461,24 +560,20 @@
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    border-bottom: 1px solid #1b2330;
-    background: #121820;
+    border-bottom: 1px solid var(--border);
+    background: var(--card-2);
     border-radius: 12px 12px 0 0;
   ">
-    <span style="color:#c9d1d9; font-weight:600;">Settings</span>
+    <span style="color:var(--text); font-weight:600;">Settings</span>
     <button id="closeSettings" style="
       background:none;
       border:none;
-      color:#c9d1d9;
+      color:var(--text);
       font-size:18px;
       cursor:pointer;
     ">&times;</button>
   </div>
-  <div style="padding:16px; color:#cbd5e1; font-size:14px;">
-    <label style="display:block; margin-bottom:10px;">
-      <input type="checkbox" id="darkModeToggle" />
-      Enable Dark Mode
-    </label>
+  <div style="padding:16px; color:var(--text); font-size:14px;">
     <label style="display:block; margin-bottom:10px;">
       <input type="checkbox" id="showShortcutsToggle" checked />
       Show Shortcuts Window
@@ -487,6 +582,15 @@
       <input type="checkbox" id="animatedBgToggle" checked />
       Animated Background
     </label>
+    <div class="setting-group">
+  <label>Theme:</label>
+  <select id="themeSelector">
+    <option value="dark">Dark</option>
+    <option value="light">Light</option>
+    <option value="purple">Purple</option>
+    <option value="green">Green</option>
+  </select>
+</div>
   </div>
 
 <label style="display:block; margin-bottom:10px;">
@@ -496,20 +600,9 @@
     margin-top: 6px;
     padding: 8px;
     border-radius: 6px;
-    border: 1px solid #1b2330;
-    background: #0a0f14;
-    color: #c9d1d9;
   " />
 </label>
-<button id="saveNameBtn" style="
-  background: #0f1520;
-  border: 1px solid #283244;
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: #c9d1d9;
-  cursor: pointer;
-  margin-bottom: 12px;
-">
+<button id="saveNameBtn">
 💾 Save Name
 </button>
 <label style="display:block; margin-bottom:10px;">
@@ -519,9 +612,6 @@
     margin-top: 6px;
     padding: 8px;
     border-radius: 6px;
-    border: 1px solid #1b2330;
-    background: #0a0f14;
-    color: #c9d1d9;
   " />
 </label>
 
@@ -532,21 +622,10 @@
     margin-top: 6px;
     padding: 8px;
     border-radius: 6px;
-    border: 1px solid #1b2330;
-    background: #0a0f14;
-    color: #c9d1d9;
   " />
 </label>
 
-<button id="saveHackatimeBtn" style="
-  background: #0f1520;
-  border: 1px solid #283244;
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: #c9d1d9;
-  cursor: pointer;
-  margin-bottom: 12px;
-">
+<button id="saveHackatimeBtn">
 💾 Save Hackatime Settings
 </button>
 <label style="display:block; margin-top:12px; margin-bottom:8px;">
@@ -559,6 +638,7 @@
 </body>
 
 </html>
+
 
 
 
