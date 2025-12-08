@@ -8,7 +8,7 @@ A better new tab for Hack Clubbers
 ## How to install (Chrome/Edge)
 | **Chrome** | **Edge** |
 |------------|----------|
-| Download Hacktab source from [The Real Duckers GitHub repo](https://github.com/TheRealDuckers/hacktab) | Download Hacktab source from [The Real Duckers GitHub repo](https://github.com/TheRealDuckers/hacktab) |
+| Download Hacktab source from [the GitHub repo](https://github.com/TheRealDuckers/hacktab) | Download Hacktab source from [the GitHub repo](https://github.com/TheRealDuckers/hacktab) |
 | Extract the ZIP file to a folder | Extract the ZIP file to a folder |
 | Open `chrome://extensions/` | Open `edge://extensions/` |
 | Enable Developer Mode (toggle top right) | Enable Developer Mode (toggle bottom left) |
