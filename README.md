@@ -17,6 +17,7 @@ A better new tab for Hack Clubbers
 
 ## Shooting Troubles (otherwise known as TroubleShooting)
 > ensure that you are selecting the root folder - *not* `hacktab > hacktab > *files*`
+<br>
 > ensure you have no spaces before (or after) you usernames in settings
 
 
