@@ -1,4 +1,4 @@
-# hacktab
+![hacktab logo](https://therealduckers.github.io/cdn/hacktab-logo.gif)
 A better new tab for [Hack Clubbers](hackclub.com) 
 
 ***
