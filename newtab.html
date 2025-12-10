@@ -403,6 +403,9 @@ html.theme-green {
       background: transparent;
   }
 
+  #shortcutForm {
+    padding-top: 10px;
+  }
   </style>
 </head>
 <body>
@@ -498,12 +501,13 @@ html.theme-green {
               <div class="title">Shortcuts</div>
             </div>
             <div class="window-content">
-              <ul style="list-style:none; padding:0; margin:0; display:grid; gap:10px;">
+              <ul style="list-style:none; padding:0; margin:0; display:grid; gap:10px;" id="shortcutList">
                 <li><a href="https://hackclub.com" style="color: var(--accent); text-decoration: none;">Hack Club</a></li>
                 <li><a href="https://hackclub.slack.com" style="color: var(--accent-2); text-decoration: none;">Hack Club Slack</a></li>
                 <li><a href="https://github.com" style="color: var(--accent-3); text-decoration: none;">GitHub</a></li>
                 <li><a href="https://news.ycombinator.com" style="color: var(--accent); text-decoration: none;">Hacker News</a></li>
-                <form class="addShortcut" id="shortcutForm">
+              </ul>
+              <form class="addShortcut" id="shortcutForm">
                   <input 
                     id="shortcutName" 
                     name="Name"
@@ -520,9 +524,8 @@ html.theme-green {
                     autocomplete="off"
                     aria-label="Shortcut URL"
                   />
-                  <button type="submit">Add</button>
+                  <button type="button" id="saveShortcut">Add</button>
                 </form>
-              </ul>
             </div>
           </div>
  
