@@ -127,6 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (eVal === 'perplexity') url = 'https://www.perplexity.ai/search/?q=' + encodeURIComponent(query);
       else if (eVal === 'ecosia') url = 'https://www.ecosia.org/search?q=' + encodeURIComponent(query);
       else if (eVal === 'wikipedia') url = 'https://en.wikipedia.org/w/index.php?search=' + encodeURIComponent(query);
+      else if (eVal === 'firefox') url = 'https://search.firefox.com/?q=' + encodeURIComponent(query);
       else url = 'https://www.google.com/search?q=' + encodeURIComponent(query); // fallback
 
       window.location.href = url;
@@ -605,5 +606,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 });
-
- 
