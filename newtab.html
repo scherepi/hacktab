@@ -406,6 +406,20 @@ html.theme-green {
   #shortcutForm {
     padding-top: 10px;
   }
+
+  #clearCustomShortcuts {
+    width: 100%;
+    color: var(--text);
+    padding: 10px 12px;
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: transparent;
+  }
+
+  #clearCustomShortcuts:hover {
+    border: 1px solid var(--muted);
+  }
   </style>
 </head>
 <body>
@@ -502,10 +516,6 @@ html.theme-green {
             </div>
             <div class="window-content">
               <ul style="list-style:none; padding:0; margin:0; display:grid; gap:10px;" id="shortcutList">
-                <li><a href="https://hackclub.com" style="color: var(--accent); text-decoration: none;">Hack Club</a></li>
-                <li><a href="https://hackclub.slack.com" style="color: var(--accent-2); text-decoration: none;">Hack Club Slack</a></li>
-                <li><a href="https://github.com" style="color: var(--accent-3); text-decoration: none;">GitHub</a></li>
-                <li><a href="https://news.ycombinator.com" style="color: var(--accent); text-decoration: none;">Hacker News</a></li>
               </ul>
               <form class="addShortcut" id="shortcutForm">
                   <input 
@@ -524,8 +534,9 @@ html.theme-green {
                     autocomplete="off"
                     aria-label="Shortcut URL"
                   />
-                  <button type="button" id="saveShortcut">Add</button>
+                  <button type="button" id="saveShortcutButton">Add</button>
                 </form>
+                <button type="button" id="clearCustomShortcuts">Clear Custom Shortcuts</button>
             </div>
           </div>
  

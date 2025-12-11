@@ -1,6 +1,3 @@
-
-
-
 // app.js
 // Expose refresh functions globally so other scripts can call them
 
@@ -94,7 +91,7 @@ window.refreshGithub = async function(username) {
   }
 };
 
-// Startup: load saved settings once DOM is ready
+// Startup: load saved settings and shortcuts once DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const settings = JSON.parse(localStorage.getItem('settings')) || {};
   if (settings.hackatimeUsername && settings.hackatimeKey) {
@@ -107,8 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-
-
     const form = document.getElementById('searchForm');
     const q = document.getElementById('q');
     const engine = document.getElementById('engine');
@@ -197,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     makeDraggable('win1');
     makeDraggable('win2');
+});
 document.addEventListener('DOMContentLoaded', () => {
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsPopup = document.getElementById('settingsPopup');
@@ -216,13 +212,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const githubUsernameInput = document.getElementById('githubUsername');
   const saveGithubBtn = document.getElementById('saveGithubBtn');
 
+  let shortcuts = getShortcuts();
+  const shortcutNameInput = document.getElementById("shortcutName");
+  const shortcutURLInput = document.getElementById("shortcutURL");
+  const saveShortcutBtn = document.getElementById("saveShortcutButton");
+  const clearShortcutsBtn = document.getElementById("clearCustomShortcuts");
+  const shortcutListElement = document.getElementById("shortcutList");
+
   function getSettings() {
     return JSON.parse(localStorage.getItem('settings')) || {};
+  }
+
+  function getShortcuts() {
+    return JSON.parse(localStorage.getItem("customShortcuts")) || [];
   }
 
   function saveSettings(settings) {
     localStorage.setItem('settings', JSON.stringify(settings));
     applySettings(settings);
+  }
+
+  function saveShortcuts() {
+    localStorage.setItem("customShortcuts", JSON.stringify(shortcuts));
+    renderShortcuts(shortcuts);
+  }
+
+  function clearShortcuts() {
+    shortcuts = [];
+    saveShortcuts();
   }
 
   function applySettings(settings) {
@@ -235,6 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadSettingsToUI() {
     const s = getSettings();
+    if (s == {}) return;
     darkModeToggle.checked = !!s.darkMode;
     showShortcutsToggle.checked = s.showShortcuts !== false;
     animatedBgToggle.checked = s.animatedBg !== false;
@@ -243,6 +261,53 @@ document.addEventListener('DOMContentLoaded', () => {
     hackatimeKeyInput.value = s.hackatimeKey || '';
     githubUsernameInput.value = s.githubUsername || '';
     applySettings(s);
+  }
+
+  function addShortcut(name, url) {
+    shortcuts.push({"name": name, "URL": url});
+    saveShortcuts();
+    renderShortcuts();
+  }
+
+  function renderShortcuts() {
+    shortcutListElement.innerHTML = '';
+    let defaultShortcuts = [
+      {
+        "name": "Hack Club",
+        "URL": "https://hackclub.com"
+      },
+      {
+        "name": "Hack Club Slack",
+        "URL": "https://hackclub.slack.com"
+      },
+      {
+        "name": "GitHub",
+        "URL": "https://github.com"
+      },
+      {
+        "name": "Hacker News",
+        "URL": "https://news.ycombinator.com"
+      }
+    ];
+    const customShortcuts = getShortcuts();
+
+    defaultShortcuts.concat(customShortcuts).forEach((shortcut) => {
+      let listElement = document.createElement("li");
+      let nextAccent = "";
+      switch (shortcutListElement.childElementCount % 3) {
+        case 0:
+          nextAccent = "accent";
+          break;
+        case 1:
+          nextAccent = "accent-2";
+          break;
+        case 2:
+          nextAccent = "accent-3";
+          break;
+      }
+      listElement.innerHTML = `<a href="${shortcut["URL"]}" style="color: var(--${nextAccent}); text-decoration: none;">${shortcut["name"]}</a>`;
+      shortcutListElement.appendChild(listElement);
+    })
   }
 
   function updateAndSaveFromUI() {
@@ -260,6 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     saveSettings(updated);
     return updated;
   }
+  console.log("checkpoint 1");
 
   settingsBtn?.addEventListener('click', () => {
     if (settingsPopup) settingsPopup.style.display = 'block';
@@ -303,6 +369,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     alert(`Name saved as "${s.name}"`);
   });
+  saveShortcutBtn.addEventListener('click', (e) => {
+    console.log("Correct button pressed.");
+    e.preventDefault();
+    const name = shortcutNameInput.value.trim();
+    const url = shortcutURLInput.value.trim();
+    if (!name ||  !url) return;
+    try {
+      new URL(url);
+    } catch (_) {
+      console.error("invalid URL");
+      return;
+    }
+    addShortcut(shortcutNameInput.value, shortcutURLInput.value);
+  })
+
+  clearShortcutsBtn.addEventListener('click', () => { clearShortcuts() });
 
   saveHackatimeBtn?.addEventListener('click', () => {
     const s = updateAndSaveFromUI();
@@ -327,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
       settingsPopup.style.display = 'none';
     }
   });
-
+  renderShortcuts();
   loadSettingsToUI();
 });
   
@@ -602,7 +684,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize
   loadSettings();
-});
-
-
 });
